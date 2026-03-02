@@ -1,31 +1,59 @@
-import fs from 'fs/promises';
-import path from 'path';
-import { Noticia } from '../types/noticia.types';
-import { RUTAS } from './paths';
+import { readFile as leerArchivo, writeFile as escribirArchivo, mkdir as crearDirectorio } from 'node:fs/promises';
+import { existsSync as existeArchivo } from 'node:fs';
+import ruta from 'node:path';
 
-export class UtilidadesArchivo {
-  private static async asegurarCarpeta(): Promise<void> {
-    const dir = path.dirname(RUTAS.NOTICIAS_JSON);
+class CandadoAsincrono {
+  private promesaBloqueo: Promise<void> = Promise.resolve();
+
+  async adquirir<T>(tarea: () => Promise<T>): Promise<T> {
+    const promesaAnterior = this.promesaBloqueo;
+    let resolverBloqueo: () => void;
+
+    this.promesaBloqueo = new Promise((resolver) => {
+      resolverBloqueo = resolver;
+    });
+
+    await promesaAnterior;
     try {
-      await fs.access(dir);
-    } catch {
-      await fs.mkdir(dir, { recursive: true });
+      return await tarea();
+    } finally {
+      resolverBloqueo!();
+    }
+  }
+}
+
+const bloqueoArchivo = new CandadoAsincrono();
+
+export class BaseDatosJson {
+  private rutaArchivo: string;
+
+  constructor(nombreArchivo: string) {
+    this.rutaArchivo = ruta.resolve(__dirname, `../../../data/${nombreArchivo}`);
+  }
+
+  async inicializar(): Promise<void> {
+    const directorio = ruta.dirname(this.rutaArchivo);
+    if (!existeArchivo(directorio)) {
+      await crearDirectorio(directorio, { recursive: true });
+    }
+    if (!existeArchivo(this.rutaArchivo)) {
+      await escribirArchivo(this.rutaArchivo, JSON.stringify([]), 'utf-8');
     }
   }
 
-  public static async leerNoticias(): Promise<Noticia[]> {
-    await this.asegurarCarpeta();
-    try {
-      const contenido = await fs.readFile(RUTAS.NOTICIAS_JSON, 'utf-8');
-      return JSON.parse(contenido) as Noticia[];
-    } catch (error) {
-      await fs.writeFile(RUTAS.NOTICIAS_JSON, JSON.stringify([]));
-      return [];
-    }
+  async leer<T>(): Promise<T[]> {
+    return bloqueoArchivo.adquirir(async () => {
+      await this.inicializar();
+      const datosCrudos = await leerArchivo(this.rutaArchivo, 'utf-8');
+      if (!datosCrudos.trim()) return [];
+      return JSON.parse(datosCrudos) as T[];
+    });
   }
 
-  public static async guardarNoticias(noticias: Noticia[]): Promise<void> {
-    await this.asegurarCarpeta();
-    await fs.writeFile(RUTAS.NOTICIAS_JSON, JSON.stringify(noticias, null, 2));
+  async escribir<T>(datos: T[]): Promise<void> {
+    return bloqueoArchivo.adquirir(async () => {
+      await this.inicializar();
+      await escribirArchivo(this.rutaArchivo, JSON.stringify(datos, null, 2), 'utf-8');
+    });
   }
 }

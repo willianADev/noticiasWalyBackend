@@ -1,22 +1,28 @@
-import { Request, Response, NextFunction } from 'express';
-import { z } from 'zod';
+import { Request as Peticion, Response as Respuesta, NextFunction as SiguienteFuncion } from 'express';
+import { ZodSchema, ZodError, ZodIssue } from 'zod';
 
-export const validarPeticion = (esquema: z.ZodTypeAny) => {
-  return async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
+export const validarPeticion = (esquema: ZodSchema) => 
+  async (pet: Peticion, res: Respuesta, sig: SiguienteFuncion) => {
     try {
-      const resultado: any = await esquema.parseAsync({
-        body: req.body,
-        query: req.query,
-        params: req.params,
+      const validado = await esquema.parseAsync({
+        body: pet.body,
+        query: pet.query,
+        params: pet.params,
       });
-
-      req.body = resultado.body ?? req.body;
-      req.query = resultado.query ?? req.query;
-      req.params = resultado.params ?? req.params;
-
-      next();
+      
+      pet.body = (validado as any).body;
+      
+      return sig();
     } catch (error) {
-      next(error);
+      if (error instanceof ZodError) {
+        return res.status(400).json({
+          exito: false,
+          errores: error.issues.map((e: ZodIssue) => ({ 
+            campo: e.path[1] || e.path[0] || 'desconocido', 
+            mensaje: e.message 
+          }))
+        });
+      }
+      return res.status(500).json({ exito: false, mensaje: "Error interno de validación" });
     }
   };
-};

@@ -1,39 +1,50 @@
 # =========================
-# Node
+# Dependencias
 # =========================
 node_modules/
 
 # =========================
-# Build
-# =========================
-dist/
-
-# =========================
-# Environment variables
+# Entorno y Secretos (¡CRÍTICO!)
 # =========================
 .env
+.env.*
+*.local
 
 # =========================
-# Logs
+# Compilación TypeScript
 # =========================
+dist/
+build/
+
+# =========================
+# Logs de Node
+# =========================
+logs
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
-*.log
+lerna-debug.log*
+
+# ==========================================
+# REGLAS DEL PROYECTO (NoticiasWalyBackend)
+# ==========================================
+
+# 1. Ignorar la base de datos JSON para no subir datos reales
+/data/
+
+# 2. Ignorar las imágenes subidas por el administrador
+/public/uploads/
 
 # =========================
-# OS files
+# Sistemas Operativos e IDEs
 # =========================
 .DS_Store
-Thumbs.db
-
-# =========================
-# Uploaded files (imagenes)
-# =========================
-uploads/
-
-# =========================
-# Data storage (json noticias)
-# =========================
-data/news/*.json
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

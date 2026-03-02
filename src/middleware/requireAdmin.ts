@@ -1,31 +1,43 @@
-import type { Request, Response, NextFunction } from "express";
-import jwt from "jsonwebtoken";
-import { env } from "../config/env";
+import { Request as Peticion, Response as Respuesta, NextFunction as SiguienteFuncion } from 'express';
+import jwt from 'jsonwebtoken';
+import { entorno } from '../config/env';
 
-type AdminJwtPayload = {
-  sub: string;
-  role: "admin";
-  iat?: number;
-  exp?: number;
-};
-
-export function requireAdmin(req: Request, res: Response, next: NextFunction) {
-  try {
-    const token = req.cookies?.[env.JWT_COOKIE_NAME];
-    if (!token) {
-      return res.status(401).json({ error: "No autorizado (sin sesión)" });
+declare global {
+  namespace Express {
+    interface Request {
+      usuarioAutenticado?: any;
     }
-
-    const decoded = jwt.verify(token, env.JWT_SECRET) as AdminJwtPayload;
-
-    if (!decoded || decoded.role !== "admin") {
-      return res.status(401).json({ error: "No autorizado (token inválido)" });
-    }
-
-    (req as any).admin = { user: decoded.sub };
-
-    return next();
-  } catch {
-    return res.status(401).json({ error: "No autorizado (token expirado o inválido)" });
   }
 }
+
+export const requerirAdmin = (pet: Peticion, res: Respuesta, sig: SiguienteFuncion) => {
+  const cabeceraAuth = pet.headers.authorization;
+
+  if (!cabeceraAuth || !cabeceraAuth.startsWith('Bearer ')) {
+    return res.status(401).json({
+      exito: false,
+      mensaje: 'Acceso denegado: Token no proporcionado'
+    });
+  }
+
+  const token = cabeceraAuth.split(' ')[1];
+
+  try {
+    const cargaUtil = jwt.verify(token, entorno.JWT_SECRETO) as any;
+    
+    if (cargaUtil.rol !== 'administrador') {
+      return res.status(403).json({
+        exito: false,
+        mensaje: 'Acceso denegado: No tienes privilegios de administrador'
+      });
+    }
+
+    pet.usuarioAutenticado = cargaUtil;
+    return sig();
+  } catch (error) {
+    return res.status(401).json({
+      exito: false,
+      mensaje: 'Token inválido o expirado'
+    });
+  }
+};

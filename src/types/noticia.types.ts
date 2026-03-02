@@ -1,19 +1,11 @@
-export type TipoNoticia = 'ACTUALIDAD' | 'DEPORTES' | 'TECNOLOGIA' | 'POLITICA' | 'AVISOS';
+export type CategoriaNoticia = 'nacionales' | 'internacionales' | 'deportes' | 'tecnologia';
 
 export interface Noticia {
   id: string;
   titulo: string;
+  resumen: string;
   contenido: string;
-  urlImagen?: string;
-  tipo: TipoNoticia;
-  fechaPublicacion: string;
+  categoria: CategoriaNoticia;
+  imagenUrl?: string;
   fechaCreacion: string;
-}
-
-export interface RespuestaPaginada<T> {
-  datos: T[];
-  total: number;
-  pagina: number;
-  limite: number;
-  totalPaginas: number;
 }

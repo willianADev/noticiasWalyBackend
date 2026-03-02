@@ -1,35 +1,24 @@
 import { Router } from 'express';
-import { ControladorNoticia } from '../controllers/noticia.controller';
+import { 
+  obtenerNoticias, 
+  obtenerNoticiaPorId, 
+  crearNoticia, 
+  actualizarNoticia, 
+  eliminarNoticia 
+} from '../controllers/noticia.controller';
 import { validarPeticion } from '../middleware/validarPeticion';
-import { esquemaCrearNoticia, esquemaPaginacion } from '../validators/noticia.schema';
-import { requireAdmin as requerirAdministrador } from '../middleware/requireAdmin';
-import { cargarImagen } from '../utils/upload';
+import { requerirAdmin } from '../middleware/requireAdmin';
+import { EsquemaCrearNoticia, EsquemaActualizarNoticia } from '../validators/noticia.schema';
 
 const enrutador = Router();
-const controladorNoticia = new ControladorNoticia();
 
-/**
- * @route   GET /api/v1/noticias
- * @desc    Obtener todas las noticias públicas (paginadas y ordenadas por fecha)
- * @access  Público
- */
-enrutador.get(
-  '/',
-  validarPeticion(esquemaPaginacion),
-  controladorNoticia.obtenerNoticias
-);
+enrutador.get('/', obtenerNoticias);
+enrutador.get('/:id', obtenerNoticiaPorId);
 
-/**
- * @route   POST /api/v1/noticias
- * @desc    Crear una nueva noticia con soporte para carga de imagen
- * @access  Privado (Solo Administrador)
- */
-enrutador.post(
-  '/',
-  requerirAdministrador,
-  cargarImagen.single('imagen'),
-  validarPeticion(esquemaCrearNoticia),
-  controladorNoticia.crearNoticia
-);
+enrutador.use(requerirAdmin);
+
+enrutador.post('/', validarPeticion(EsquemaCrearNoticia), crearNoticia);
+enrutador.put('/:id', validarPeticion(EsquemaActualizarNoticia), actualizarNoticia);
+enrutador.delete('/:id', eliminarNoticia);
 
 export default enrutador;

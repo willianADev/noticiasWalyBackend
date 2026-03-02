@@ -1,15 +1,16 @@
-import path from 'path';
+import ruta from 'node:path';
 
 const RAIZ_PROYECTO = process.cwd();
 
-const CARPETA_DATOS = path.join(RAIZ_PROYECTO, 'datos');
+export const CARPETA_DATOS = ruta.join(RAIZ_PROYECTO, 'data');
+export const CARPETA_PUBLICA = ruta.join(RAIZ_PROYECTO, 'public');
+export const CARPETA_SUBIDAS = ruta.join(CARPETA_PUBLICA, 'uploads');
 
 export const RUTAS = {
-  NOTICIAS_JSON: path.join(CARPETA_DATOS, 'noticias.json'),
-  CARPETA_IMAGENES: path.join(CARPETA_DATOS, 'imagenes'),
-  CARPETA_DATOS: CARPETA_DATOS,
+  NOTICIAS_JSON: ruta.join(CARPETA_DATOS, 'noticias.json'),
+  CARPETA_IMAGENES: CARPETA_SUBIDAS,
 
-  obtenerRutaImagen: (nombreArchivo: string) => path.join(CARPETA_DATOS, 'imagenes', nombreArchivo),
+  obtenerRutaImagen: (nombreArchivo: string) => ruta.join(CARPETA_SUBIDAS, nombreArchivo),
 };
 
 if (!RAIZ_PROYECTO) {

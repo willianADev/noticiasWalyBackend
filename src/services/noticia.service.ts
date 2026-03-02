@@ -1,46 +1,64 @@
-import { v4 as uuidv4 } from 'uuid';
-import { Noticia, RespuestaPaginada } from '../types/noticia.types';
-import { UtilidadesArchivo } from '../utils/file.utils';
+import { BaseDatosJson } from '../utils/file.utils';
+import { Noticia } from '../types/noticia.types';
+import { EntradaCrearNoticia, EntradaActualizarNoticia } from '../validators/noticia.schema';
+import crypto from 'node:crypto';
+
+const dbNoticias = new BaseDatosJson('noticias.json');
 
 export class ServicioNoticia {
-  
-  public async crear(datos: Omit<Noticia, 'id' | 'fechaCreacion'>): Promise<Noticia> {
-    const noticias = await UtilidadesArchivo.leerNoticias();
-    const ahora = new Date().toISOString();
+  static async obtenerTodas(): Promise<Noticia[]> {
+    const noticias = await dbNoticias.leer<Noticia>();
+    return noticias.sort((a, b) => 
+      new Date(b.fechaCreacion).getTime() - new Date(a.fechaCreacion).getTime()
+    );
+  }
 
+  static async obtenerPorId(id: string): Promise<Noticia | null> {
+    const noticias = await dbNoticias.leer<Noticia>();
+    return noticias.find(n => n.id === id) || null;
+  }
+
+  static async crear(datos: EntradaCrearNoticia): Promise<Noticia> {
+    const noticias = await dbNoticias.leer<Noticia>();
+    
     const nuevaNoticia: Noticia = {
-      id: uuidv4(),
+      id: crypto.randomUUID(),
       ...datos,
-      fechaPublicacion: datos.fechaPublicacion || ahora,
-      fechaCreacion: ahora,
+      fechaCreacion: new Date().toISOString()
     };
 
     noticias.push(nuevaNoticia);
-    await UtilidadesArchivo.guardarNoticias(noticias);
-
+    await dbNoticias.escribir(noticias);
+    
     return nuevaNoticia;
   }
 
-  public async obtenerTodas(pagina: number, limite: number): Promise<RespuestaPaginada<Noticia>> {
-    const noticias = await UtilidadesArchivo.leerNoticias();
-    const ahoraMs = new Date().getTime();
-    const noticiasPublicas = noticias.filter((n: Noticia) => 
-      new Date(n.fechaPublicacion).getTime() <= ahoraMs
-    );
+  static async actualizar(id: string, datos: EntradaActualizarNoticia): Promise<Noticia | null> {
+    const noticias = await dbNoticias.leer<Noticia>();
+    const indice = noticias.findIndex(n => n.id === id);
 
-    noticiasPublicas.sort((a, b) => 
-      new Date(b.fechaPublicacion).getTime() - new Date(a.fechaPublicacion).getTime()
-    );
+    if (indice === -1) return null;
 
-    const inicio = (pagina - 1) * limite;
-    const datosPaginados = noticiasPublicas.slice(inicio, inicio + limite);
-
-    return {
-      datos: datosPaginados,
-      total: noticiasPublicas.length,
-      pagina,
-      limite,
-      totalPaginas: Math.ceil(noticiasPublicas.length / limite)
+    const noticiaActualizada = {
+      ...noticias[indice],
+      ...datos
     };
+
+    noticias[indice] = noticiaActualizada;
+    await dbNoticias.escribir(noticias);
+
+    return noticiaActualizada;
+  }
+
+  static async eliminar(id: string): Promise<boolean> {
+    const noticias = await dbNoticias.leer<Noticia>();
+    const noticiasRestantes = noticias.filter(n => n.id !== id);
+
+    if (noticias.length === noticiasRestantes.length) {
+      return false;
+    }
+
+    await dbNoticias.escribir(noticiasRestantes);
+    return true;
   }
 }
