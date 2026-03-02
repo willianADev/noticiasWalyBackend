@@ -27,15 +27,6 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-# ==========================================
-# REGLAS DEL PROYECTO (NoticiasWalyBackend)
-# ==========================================
-
-# 1. Ignorar la base de datos JSON para no subir datos reales
-/data/
-
-# 2. Ignorar las imágenes subidas por el administrador
-/public/uploads/
 
 # =========================
 # Sistemas Operativos e IDEs
