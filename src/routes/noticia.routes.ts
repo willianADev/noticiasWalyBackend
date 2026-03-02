@@ -9,16 +9,31 @@ import {
 import { validarPeticion } from '../middleware/validarPeticion';
 import { requerirAdmin } from '../middleware/requireAdmin';
 import { EsquemaCrearNoticia, EsquemaActualizarNoticia } from '../validators/noticia.schema';
+import { cargarImagen } from '../utils/upload';
 
 const enrutador = Router();
 
+// Rutas Públicas
 enrutador.get('/', obtenerNoticias);
 enrutador.get('/:id', obtenerNoticiaPorId);
 
+// Rutas Privadas
 enrutador.use(requerirAdmin);
 
-enrutador.post('/', validarPeticion(EsquemaCrearNoticia), crearNoticia);
-enrutador.put('/:id', validarPeticion(EsquemaActualizarNoticia), actualizarNoticia);
+enrutador.post(
+  '/', 
+  cargarImagen.single('imagen'),
+  validarPeticion(EsquemaCrearNoticia), 
+  crearNoticia
+);
+
+enrutador.put(
+  '/:id', 
+  cargarImagen.single('imagen'), 
+  validarPeticion(EsquemaActualizarNoticia), 
+  actualizarNoticia
+);
+
 enrutador.delete('/:id', eliminarNoticia);
 
 export default enrutador;
