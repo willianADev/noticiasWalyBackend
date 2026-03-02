@@ -1,10 +1,17 @@
-import path from "path";
+import path from 'path';
 
-export const ROOT_DIR = process.cwd();
+const RAIZ_PROYECTO = process.cwd();
 
-export const DATA_NEWS_DIR = path.join(ROOT_DIR, "data", "news");
-export const UPLOADS_NEWS_DIR = path.join(ROOT_DIR, "uploads", "news");
+const CARPETA_DATOS = path.join(RAIZ_PROYECTO, 'datos');
 
-export function noticiaJsonPath(id: string) {
-  return path.join(DATA_NEWS_DIR, `${id}.json`);
+export const RUTAS = {
+  NOTICIAS_JSON: path.join(CARPETA_DATOS, 'noticias.json'),
+  CARPETA_IMAGENES: path.join(CARPETA_DATOS, 'imagenes'),
+  CARPETA_DATOS: CARPETA_DATOS,
+
+  obtenerRutaImagen: (nombreArchivo: string) => path.join(CARPETA_DATOS, 'imagenes', nombreArchivo),
+};
+
+if (!RAIZ_PROYECTO) {
+  throw new Error('No se pudo determinar la raíz del proyecto. El entorno de ejecución es inválido.');
 }

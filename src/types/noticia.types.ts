@@ -1,13 +1,19 @@
-export type EstadoNoticia = "publicada" | "borrador";
+export type TipoNoticia = 'ACTUALIDAD' | 'DEPORTES' | 'TECNOLOGIA' | 'POLITICA' | 'AVISOS';
 
 export interface Noticia {
   id: string;
   titulo: string;
-  resumen: string;
   contenido: string;
-  imagenUrl: string;
-  fechaEvento: string;
+  urlImagen?: string;
+  tipo: TipoNoticia;
   fechaPublicacion: string;
-  fechaActualizacion: string;
-  estado: EstadoNoticia;
+  fechaCreacion: string;
+}
+
+export interface RespuestaPaginada<T> {
+  datos: T[];
+  total: number;
+  pagina: number;
+  limite: number;
+  totalPaginas: number;
 }

@@ -1,42 +1,31 @@
-import fs from "fs/promises";
-import path from "path";
+import fs from 'fs/promises';
+import path from 'path';
+import { Noticia } from '../types/noticia.types';
+import { RUTAS } from './paths';
 
-export async function ensureDir(dirPath: string) {
-  await fs.mkdir(dirPath, { recursive: true });
-}
-
-/**
- * Escritura "atómica" (reduce riesgo de archivo corrupto)
- */
-export async function writeJsonAtomic(filePath: string, data: unknown) {
-  const dir = path.dirname(filePath);
-  await ensureDir(dir);
-
-  const tmpPath = `${filePath}.tmp`;
-  const json = JSON.stringify(data, null, 2);
-
-  await fs.writeFile(tmpPath, json, "utf8");
-  await fs.rename(tmpPath, filePath);
-}
-
-export async function readJson<T>(filePath: string): Promise<T> {
-  const raw = await fs.readFile(filePath, "utf8");
-  return JSON.parse(raw) as T;
-}
-
-export async function fileExists(filePath: string) {
-  try {
-    await fs.access(filePath);
-    return true;
-  } catch {
-    return false;
+export class UtilidadesArchivo {
+  private static async asegurarCarpeta(): Promise<void> {
+    const dir = path.dirname(RUTAS.NOTICIAS_JSON);
+    try {
+      await fs.access(dir);
+    } catch {
+      await fs.mkdir(dir, { recursive: true });
+    }
   }
-}
 
-export async function safeUnlink(filePath: string) {
-  try {
-    await fs.unlink(filePath);
-  } catch {
-    // ignore
+  public static async leerNoticias(): Promise<Noticia[]> {
+    await this.asegurarCarpeta();
+    try {
+      const contenido = await fs.readFile(RUTAS.NOTICIAS_JSON, 'utf-8');
+      return JSON.parse(contenido) as Noticia[];
+    } catch (error) {
+      await fs.writeFile(RUTAS.NOTICIAS_JSON, JSON.stringify([]));
+      return [];
+    }
+  }
+
+  public static async guardarNoticias(noticias: Noticia[]): Promise<void> {
+    await this.asegurarCarpeta();
+    await fs.writeFile(RUTAS.NOTICIAS_JSON, JSON.stringify(noticias, null, 2));
   }
 }
