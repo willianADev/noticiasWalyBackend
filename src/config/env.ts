@@ -17,4 +17,10 @@ if (!entornoValidado.success) {
   process.exit(1); 
 }
 
+export const CONFIG_CLOUDINARY = {
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+};
+
 export const entorno = entornoValidado.data;

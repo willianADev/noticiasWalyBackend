@@ -1,38 +1,29 @@
 import multer from 'multer';
-import ruta from 'node:path';
-import fs from 'node:fs';
-import crypto from 'node:crypto';
-import { RUTAS } from './paths';
+import { v2 as cloudinary } from 'cloudinary';
+import { CloudinaryStorage } from 'multer-storage-cloudinary';
+import { CONFIG_CLOUDINARY } from '../config/env';
 
-if (!fs.existsSync(RUTAS.CARPETA_IMAGENES)) {
-  fs.mkdirSync(RUTAS.CARPETA_IMAGENES, { recursive: true });
-}
-
-const motorAlmacenamiento = multer.diskStorage({
-  destination: (pet, archivo, cb) => {
-    cb(null, RUTAS.CARPETA_IMAGENES);
-  },
-  filename: (pet, archivo, cb) => {
-    const extension = ruta.extname(archivo.originalname).toLowerCase();
-    const nombreArchivo = `${crypto.randomUUID()}${extension}`;
-    cb(null, nombreArchivo);
-  }
+cloudinary.config({
+  cloud_name: CONFIG_CLOUDINARY.cloud_name,
+  api_key: CONFIG_CLOUDINARY.api_key,
+  api_secret: CONFIG_CLOUDINARY.api_secret
 });
 
-const filtroSeguridad = (pet: any, archivo: Express.Multer.File, cb: multer.FileFilterCallback) => {
-  const tiposMimePermitidos = ['image/jpeg', 'image/png', 'image/webp'];
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: async (req, file) => {
+    return {
+      folder: 'noticias-waly',
+      format: 'webp',
+      public_id: `${Date.now()}-${file.originalname.split('.')[0]}`,
+      transformation: [{ width: 800, height: 600, crop: 'limit' }]
+    };
+  },
+});
 
-  if (tiposMimePermitidos.includes(archivo.mimetype)) {
-    cb(null, true);
-  } else {
-    cb(new Error('Formato de imagen no permitido. Usa JPG, PNG o WEBP.'));
-  }
-};
-
-export const cargarImagen = multer({
-  storage: motorAlmacenamiento,
-  fileFilter: filtroSeguridad,
+export const cargarImagen = multer({ 
+  storage: storage,
   limits: {
-    fileSize: 5 * 1024 * 1024 // Limite estricto de 5 MB
+    fileSize: 5 * 1024 * 1024 // Límite de 5MB por imagen
   }
 });

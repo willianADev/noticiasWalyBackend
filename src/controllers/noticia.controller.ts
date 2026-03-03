@@ -26,15 +26,15 @@ export const obtenerNoticiaPorId = async (pet: Peticion<{ id: string }>, res: Re
 export const crearNoticia = async (pet: Peticion<{}, {}, EntradaCrearNoticia>, res: Respuesta) => {
   try {
     const datosNoticia = pet.body;
+
     if (pet.file) {
-      datosNoticia.imagenUrl = `/public/uploads/${pet.file.filename}`;
+      datosNoticia.imagenUrl = pet.file.path; 
     }
 
     const nuevaNoticia = await ServicioNoticia.crear(datosNoticia);
-    return res.status(201).json({ exito: true, mensaje: 'Noticia creada', datos: nuevaNoticia });
+    return res.status(201).json({ exito: true, datos: nuevaNoticia });
   } catch (error) {
-    console.error("Error al crear:", error);
-    return res.status(500).json({ exito: false, mensaje: 'Error al crear la noticia' });
+    return res.status(500).json({ exito: false, mensaje: 'Error al crear noticia' });
   }
 };
 
